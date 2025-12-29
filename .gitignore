@@ -5,3 +5,5 @@
 # package lock file
 app-react/package-lock.json
 
+# npm build output
+/quiz-react/dist
