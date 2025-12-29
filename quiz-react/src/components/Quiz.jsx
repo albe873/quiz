@@ -4,7 +4,6 @@ function Option({ type, checked, onChange, label, text }) {
   return (
     <label className={`option`}>
       <input type={type} checked={checked} onChange={onChange} />
-      <strong>{label}.</strong>
       <span>{text}</span>
     </label>
   )
