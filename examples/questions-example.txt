@@ -9,7 +9,7 @@ C. 1,41
 D. 1,61
 A
 
-What is is 2 + 2?
+What is 2 + 2?
 A. 3
 B. 4
 C. 5
