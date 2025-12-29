@@ -1,0 +1,32 @@
+# questions=2
+# time=2
+
+@Mathematics
+What is the approximate value of pi?
+A. 3,14
+B. 2,71
+C. 1,41
+D. 1,61
+A
+
+What is is 2 + 2?
+A. 3
+B. 4
+C. 5
+B
+
+Select the prime numbers
+A. 2
+B. 4
+C. 5
+D. 6
+E. 7
+ACE
+
+@Computer Science
+Select the programming languages
+A. HTML
+B. Java
+C. CSS
+D. Python
+BD
