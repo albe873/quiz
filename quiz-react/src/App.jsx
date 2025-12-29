@@ -15,11 +15,11 @@ export default function App() {
   const [selections, setSelections] = useState([])
   const [lastN, setLastN] = useState(() => {
     const v = localStorage.getItem(`${appname}:n`);
-    return v ? parseInt(v, 10) : 16;
+    return v ? parseInt(v, 10) : 10;
   })
   const [lastT, setLastT] = useState(() => {
     const v = localStorage.getItem(`${appname}:t`);
-    return v ? parseInt(v, 10) : 18;
+    return v ? parseInt(v, 10) : 10;
   })
   const [savedQuizzes, setSavedQuizzes] = useState(() => {
     try { return JSON.parse(localStorage.getItem(`${appname}:saved`) || '[]') } catch { return [] }
