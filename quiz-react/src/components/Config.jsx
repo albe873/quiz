@@ -1,6 +1,121 @@
 import React, { useEffect, useState } from 'react'
 import { parseQuestionsFromText } from '../utils/parseQuestions'
 
+function ConfigUpload({ hasFile, parsedCount, foundCount, onFileChange, onSaveRequest }) {
+  return (
+    <div className="row">
+      <label>Questions file (.txt):</label>
+      <input type="file" accept=".txt" onChange={onFileChange} />
+      {hasFile && foundCount > 0 && <span className="badge">{foundCount} questions found</span>}
+      {!hasFile && parsedCount > 0 && <span className="badge">{parsedCount} questions loaded</span>}
+      {hasFile && (
+        <button
+          className="success"
+          style={{ marginLeft: 8 }}
+          onClick={onSaveRequest}
+        >Save loaded quiz</button>
+      )}
+    </div>
+  )
+}
+
+function ConfigInputs({ n, tMin, onChangeN, onChangeTMin }) {
+  return (
+    <>
+      <div className="row">
+        <label>Number of questions:</label>
+        <input type="number" min={1} value={n} onChange={(e) => onChangeN(parseInt(e.target.value || '0', 10))} />
+      </div>
+      <div className="row">
+        <label>Time (minutes):</label>
+        <input type="number" min={1} value={tMin} onChange={(e) => onChangeTMin(parseInt(e.target.value || '0', 10))} />
+      </div>
+    </>
+  )
+}
+
+function ConfigFooter({ canStart, onStart }) {
+  return (
+    <div className="footer">
+      <span className="small">Upload a file or use the one already loaded.</span>
+      <button disabled={!canStart} onClick={onStart}>Start quiz</button>
+    </div>
+  )
+}
+
+function SaveModal({ show, saveName, onChangeName, onCancel, onSave }) {
+  if (!show) return null
+  return (
+    <div className="modal">
+      <div className="modal-content">
+        <h1>Name the quiz</h1>
+        <div className="row">
+          <input
+            type="text"
+            value={saveName}
+            onChange={(e) => onChangeName(e.target.value)}
+            style={{ flex: 1 }}
+          />
+        </div>
+        <div className="footer">
+          <button className="secondary" onClick={onCancel}>Cancel</button>
+          <button className="success" onClick={onSave}>Save</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DeleteModal({ show, deleteTarget, onCancel, onConfirm }) {
+  if (!show) return null
+  return (
+    <div className="modal">
+      <div className="modal-content">
+        <h1>Delete saved quiz</h1>
+        <div className="row">
+          <span className="small">Are you sure you want to delete {deleteTarget?.name || 'this quiz'}?</span>
+        </div>
+        <div className="footer">
+          <button className="secondary" onClick={onCancel}>Cancel</button>
+          <button className="danger" onClick={onConfirm}>Delete</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SavedQuizItem({ q, onLoad, onDeleteRequest }) {
+  return (
+    <div className="option">
+      <div style={{ minWidth: 160 }}>
+        <div className="badge">{q.name}</div>
+        <div className="small">Questions: {q.count} • Time: {q.time} min</div>
+      </div>
+      <div className="row" style={{ marginLeft: 'auto' }}>
+        <button className="secondary" onClick={onLoad}>Load</button>
+        <button className="secondary" onClick={onDeleteRequest}>Delete</button>
+      </div>
+    </div>
+  )
+}
+
+function SavedQuizzesList({ savedQuizzes, onLoadSaved, onDeleteRequest }) {
+  return (
+    <div className="card grid">
+      <h1>Saved quizzes</h1>
+      {(!savedQuizzes || savedQuizzes.length === 0) && <span className="small">No saved quizzes</span>}
+      {savedQuizzes && savedQuizzes.map((q) => (
+        <SavedQuizItem
+          key={q.id}
+          q={q}
+          onLoad={() => onLoadSaved(q.id)}
+          onDeleteRequest={() => onDeleteRequest(q)}
+        />
+      ))}
+    </div>
+  )
+}
+
 export default function Config({ onStart, parsedCount, initialN, initialT, savedQuizzes, onSaveCurrent, onLoadSaved, onDeleteSaved, onReplaceDataset }) {
   const [fileText, setFileText] = useState('')
   const [n, setN] = useState(initialN ?? 10)
@@ -8,7 +123,7 @@ export default function Config({ onStart, parsedCount, initialN, initialT, saved
   const [foundCount, setFoundCount] = useState(0)
   const [saveName, setSaveName] = useState('')
   const [fileName, setFileName] = useState('')
-  const [showNameModal, setShowNameModal] = useState(false)
+  const [showSaveModal, setShowSaveModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
 
@@ -36,107 +151,78 @@ export default function Config({ onStart, parsedCount, initialN, initialT, saved
   const hasFile = fileText.trim().length > 0
   const canStart = (hasFile || parsedCount > 0) && n > 0 && tMin > 0
 
+  const requestNameModal = () => {
+    const base = (fileName || 'quiz').replace(/\.[^.]+$/, '')
+    setSaveName(base)
+    setShowSaveModal(true)
+  }
+
+  const handleStart = () => onStart(hasFile ? fileText : '', n, tMin)
+
+  const handleConfirmSave = () => {
+    if (!saveName.trim()) return
+    onSaveCurrent && onSaveCurrent(saveName.trim(), fileText, n, tMin)
+    setShowSaveModal(false)
+  }
+
+  const handleConfirmDelete = () => {
+    if (deleteTarget?.id) {
+      onDeleteSaved && onDeleteSaved(deleteTarget.id)
+    }
+    setShowDeleteModal(false)
+    setDeleteTarget(null)
+  }
+
+  const handleLoadSaved = async (id) => {
+    const res = onLoadSaved && await onLoadSaved(id)
+    if (res) {
+      setFileText(res.text)
+      setFoundCount(res.count)
+      setN(res.n)
+      setTMin(res.t)
+    }
+  }
+
   return (
     <>
       <div className="card grid">
         <div className="grid">
-          <div className="row">
-            <label>Questions file (.txt):</label>
-            <input type="file" accept=".txt" onChange={handleFile} />
-            {hasFile && foundCount > 0 && <span className="badge">{foundCount} questions found</span>}
-            {!hasFile && parsedCount > 0 && <span className="badge">{parsedCount} questions loaded</span>}
-            {hasFile && (
-                <button
-                className="success"
-                style={{ marginLeft: 8 }}
-                onClick={() => {
-                    const base = (fileName || 'quiz').replace(/\.[^.]+$/, '')
-                    setSaveName(base)
-                    setShowNameModal(true)
-                }}
-                >Save loaded quiz</button>
-            )}
-          </div>
-          <div className="row">
-            <label>Number of questions:</label>
-            <input type="number" min={1} value={n} onChange={(e) => setN(parseInt(e.target.value || '0', 10))} />
-          </div>
-          <div className="row">
-            <label>Time (minutes):</label>
-            <input type="number" min={1} value={tMin} onChange={(e) => setTMin(parseInt(e.target.value || '0', 10))} />
-          </div>
+          <ConfigUpload
+            hasFile={hasFile}
+            parsedCount={parsedCount}
+            foundCount={foundCount}
+            onFileChange={handleFile}
+            onSaveRequest={requestNameModal}
+          />
+          <ConfigInputs
+            n={n}
+            tMin={tMin}
+            onChangeN={(val) => setN(val)}
+            onChangeTMin={(val) => setTMin(val)}
+          />
         </div>
-        <div className="footer">
-          <span className="small">Upload a file or use the one already loaded.</span>
-          <button disabled={!canStart} onClick={() => onStart(hasFile ? fileText : '', n, tMin)}>Start quiz</button>
-        </div>
-        {showNameModal && (
-          <div className="modal">
-            <div className="modal-content">
-              <h1>Name the quiz</h1>
-              <div className="row">
-                <input
-                  type="text"
-                  value={saveName}
-                  onChange={(e) => setSaveName(e.target.value)}
-                  style={{ flex: 1 }}
-                />
-              </div>
-              <div className="footer">
-                <button className="secondary" onClick={() => setShowNameModal(false)}>Cancel</button>
-                <button
-                  className="success"
-                  onClick={() => {
-                    if (!saveName.trim()) return
-                      onSaveCurrent && onSaveCurrent(saveName.trim(), fileText, n, tMin)
-                    setShowNameModal(false)
-                  }}
-                >Save</button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfigFooter canStart={canStart} onStart={handleStart} />
+        <SaveModal
+          show={showSaveModal}
+          saveName={saveName}
+          onChangeName={setSaveName}
+          onCancel={() => setShowSaveModal(false)}
+          onSave={handleConfirmSave}
+        />
       </div>
       <div className="grid">
-        <div className="card grid">
-          <h1>Saved quizzes</h1>
-          {(!savedQuizzes || savedQuizzes.length === 0) && <span className="small">No saved quizzes</span>}
-          {savedQuizzes && savedQuizzes.map((q) => (
-            <div key={q.id} className="option">
-              <div style={{ minWidth: 160 }}>
-                <div className="badge">{q.name}</div>
-                <div className="small">Questions: {q.count} • Time: {q.time} min</div>
-              </div>
-              <div className="row" style={{ marginLeft: 'auto' }}>
-                <button className="secondary" onClick={async () => {
-                  const res = onLoadSaved && await onLoadSaved(q.id)
-                  if (res) {
-                    setFileText(res.text)
-                    setFoundCount(res.count)
-                    setN(res.n)
-                    setTMin(res.t)
-                  }
-                }}>Load</button>
-                <button className="secondary" onClick={() => { setDeleteTarget(q); setShowDeleteModal(true) }}>Delete</button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <SavedQuizzesList
+          savedQuizzes={savedQuizzes}
+          onLoadSaved={handleLoadSaved}
+          onDeleteRequest={(q) => { setDeleteTarget(q); setShowDeleteModal(true) }}
+        />
       </div>
-      {showDeleteModal && (
-        <div className="modal">
-          <div className="modal-content">
-            <h1>Delete saved quiz</h1>
-            <div className="row">
-              <span className="small">Are you sure you want to delete {deleteTarget?.name || 'this quiz'}?</span>
-            </div>
-            <div className="footer">
-              <button className="secondary" onClick={() => { setShowDeleteModal(false); setDeleteTarget(null) }}>Cancel</button>
-              <button className="danger" onClick={() => { if (deleteTarget?.id) { onDeleteSaved && onDeleteSaved(deleteTarget.id) } setShowDeleteModal(false); setDeleteTarget(null) }}>Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteModal
+        show={showDeleteModal}
+        deleteTarget={deleteTarget}
+        onCancel={() => { setShowDeleteModal(false); setDeleteTarget(null) }}
+        onConfirm={handleConfirmDelete}
+      />
     </>
   )
 }
