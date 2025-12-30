@@ -8,6 +8,7 @@ h1 { font-size: 1.6rem; margin: 0 0 16px; }
 label { font-weight: 600; }
 input[type="number"] { width: 90px; }
 button { background: #2563eb; color: white; border: none; border-radius: 8px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
+button.danger { background: #910d0d; }
 button.secondary { background: #374151; }
 button.success { background: #16a34a; }
 button:disabled { opacity: 0.6; cursor: not-allowed; }

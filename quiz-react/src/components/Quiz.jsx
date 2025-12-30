@@ -15,6 +15,7 @@ export default function Quiz({ questions, minutes, onFinish }) {
   const [answers, setAnswers] = useState(() => questions.map(() => new Set()))
   const [secsLeft, setSecsLeft] = useState(minutes * 60)
   const timerRef = useRef(null)
+  const [showFinishModal, setShowFinishModal] = useState(false)
 
   useEffect(() => {
     timerRef.current = setInterval(() => setSecsLeft((s) => (s > 0 ? s - 1 : 0)), 1000)
@@ -77,8 +78,22 @@ export default function Quiz({ questions, minutes, onFinish }) {
           <button className="secondary" onClick={() => go(-1)} disabled={idx === 0}>Previous</button>
           <button className="secondary" onClick={() => go(+1)} disabled={idx === total - 1}>Next</button>
         </div>
-        <button onClick={() => onFinish(answers)}>Finish</button>
+        <button onClick={() => setShowFinishModal(true)}>Finish</button>
       </div>
+      {showFinishModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <h1>Finish quiz</h1>
+            <div className="row">
+              <span className="small">This will submit your answers and show results.</span>
+            </div>
+            <div className="footer">
+              <button className="secondary" onClick={() => setShowFinishModal(false)}>Cancel</button>
+              <button className="danger" onClick={() => { setShowFinishModal(false); onFinish(answers) }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
