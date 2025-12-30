@@ -9,6 +9,8 @@ export default function Config({ onStart, parsedCount, initialN, initialT, saved
   const [saveName, setSaveName] = useState('')
   const [fileName, setFileName] = useState('')
   const [showNameModal, setShowNameModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   useEffect(() => {
     setN(initialN ?? 10)
@@ -115,12 +117,26 @@ export default function Config({ onStart, parsedCount, initialN, initialT, saved
                     setTMin(res.t)
                   }
                 }}>Load</button>
-                <button className="secondary" onClick={() => onDeleteSaved && onDeleteSaved(q.id)}>Delete</button>
+                <button className="secondary" onClick={() => { setDeleteTarget(q); setShowDeleteModal(true) }}>Delete</button>
               </div>
             </div>
           ))}
         </div>
       </div>
+      {showDeleteModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <h1>Delete saved quiz</h1>
+            <div className="row">
+              <span className="small">Are you sure you want to delete {deleteTarget?.name || 'this quiz'}?</span>
+            </div>
+            <div className="footer">
+              <button className="secondary" onClick={() => { setShowDeleteModal(false); setDeleteTarget(null) }}>Cancel</button>
+              <button className="danger" onClick={() => { if (deleteTarget?.id) { onDeleteSaved && onDeleteSaved(deleteTarget.id) } setShowDeleteModal(false); setDeleteTarget(null) }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
