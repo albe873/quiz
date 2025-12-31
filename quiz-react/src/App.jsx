@@ -101,11 +101,21 @@ export default function App() {
         if (q.type === 'match') {
           // Re-map correctMap to shuffled answers using labels
           const oldIndexToLabel = Object.fromEntries(q.answers.map((a, i) => [i, a.label]))
-          const newCorrectMap = (q.correctMap || []).map((oldIdx) => {
+          const remappedByAnswer = (q.correctMap || []).map((oldIdx) => {
             const lbl = oldIndexToLabel[oldIdx]
             return labelToNewIndex[lbl]
-          }).filter((i) => i !== undefined)
-          return { ...q, answers: answersShuffled, correctMap: newCorrectMap }
+          })
+
+          // Shuffle items and reorder correctMap using the same permutation
+          const itemsWithIndex = (q.items || []).map((it, idx) => ({ it, idx }))
+          const itemsShuffledWithIndex = [...itemsWithIndex].sort(() => Math.random() - 0.5)
+          const itemsShuffled = itemsShuffledWithIndex.map((x) => x.it)
+          const itemPermutation = itemsShuffledWithIndex.map((x) => x.idx)
+          const correctMap = itemPermutation
+            .map((oldIdx) => remappedByAnswer[oldIdx])
+            .filter((i) => i !== undefined)
+
+          return { ...q, items: itemsShuffled, answers: answersShuffled, correctMap: correctMap }
         } else {
           // non-match: preserve original type ('single' or 'multiple')
           const correctLabels = (q.correct || []).map((idx) => q.answers[idx].label)
