@@ -59,27 +59,56 @@ export function parseQuestionsFromText(text) {
       i++;
     }
 
-    // Next non-empty line should contain the correct letters (e.g., "A" or "AC" or "A C")
-    let correctLine = '';
-    while (i < lines.length && !(correctLine = lines[i].trim())) { i++; }
-    if (!correctLine) break; // end
+    // After answers, decide: either a solution labels line (choice) or an items block starting with '>' (match), then a mapping labels line
+    // Skip blank lines
+    while (i < lines.length && !lines[i].trim()) i++;
+    if (i >= lines.length) break;
 
-    const correctLabels = (correctLine.match(/[A-Z]/g) || []).map((c) => c.toUpperCase());
-    const multiSelect = correctLabels.length > 1;
+    const peek = lines[i].trim();
+    if (peek.startsWith('>')) {
+      // Match-type: collect items first, then mapping labels
+      const items = [];
+      while (i < lines.length && lines[i].trim().startsWith('>')) {
+        const itemText = lines[i].trim().replace(/^>\s*/, '');
+        if (itemText) items.push(itemText);
+        i++;
+      }
+      // Next non-empty line must be mapping labels like ACBD or A C B D
+      let mapLine = '';
+      while (i < lines.length && !(mapLine = lines[i].trim())) i++;
+      if (!mapLine) break;
+      const mapLabels = (mapLine.match(/[A-Z]/g) || []).map((c) => c.toUpperCase());
+      const labelIndex = Object.fromEntries(answers.map((a, idx) => [a.label, idx]));
+      const correctMap = mapLabels
+        .filter((lbl) => labelIndex[lbl] !== undefined)
+        .map((lbl) => labelIndex[lbl]);
 
-    // Map correct labels to indices based on collected answers
-    const labelIndex = Object.fromEntries(answers.map((a, idx) => [a.label, idx]));
-    const correctIndices = correctLabels
-      .filter((lbl) => labelIndex[lbl] !== undefined)
-      .map((lbl) => labelIndex[lbl]);
+      questions.push({
+        topic: currentTopic,
+        type: 'match',
+        text: questionText,
+        items,
+        answers,
+        correctMap,
+        multi: false,
+      });
+    } else {
+      // Choice-type: this line is the solution letters
+      const correctLabels = (peek.match(/[A-Z]/g) || []).map((c) => c.toUpperCase());
+      const labelIndex = Object.fromEntries(answers.map((a, idx) => [a.label, idx]));
+      const correctIndices = correctLabels
+        .filter((lbl) => labelIndex[lbl] !== undefined)
+        .map((lbl) => labelIndex[lbl]);
+      const multiSelect = correctLabels.length > 1;
 
-    questions.push({
-      topic: currentTopic,
-      text: questionText,
-      answers, // [{label, text}]
-      correct: correctIndices, // [indices]
-      multi: multiSelect,
-    });
+      questions.push({
+        topic: currentTopic,
+        type: multiSelect ? 'multiple' : 'single',
+        text: questionText,
+        answers,
+        correct: correctIndices,
+      });
+    }
 
     // Skip any trailing blank lines
     i++;

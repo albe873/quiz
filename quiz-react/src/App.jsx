@@ -95,11 +95,23 @@ export default function App() {
       const shuffledQuestions = [...dataset].sort(() => Math.random() - 0.5).slice(0, count)
 
       const pickedPrepared = shuffledQuestions.map((q) => {
-        const correctLabels = q.correct.map((idx) => q.answers[idx].label)
         const answersShuffled = [...q.answers].sort(() => Math.random() - 0.5)
-        const labelIndex = Object.fromEntries(answersShuffled.map((a, i) => [a.label, i]))
-        const newCorrect = correctLabels.map((lbl) => labelIndex[lbl]).filter((i) => i !== undefined)
-        return { ...q, answers: answersShuffled, correct: newCorrect }
+        const labelToNewIndex = Object.fromEntries(answersShuffled.map((a, i) => [a.label, i]))
+
+        if (q.type === 'match') {
+          // Re-map correctMap to shuffled answers using labels
+          const oldIndexToLabel = Object.fromEntries(q.answers.map((a, i) => [i, a.label]))
+          const newCorrectMap = (q.correctMap || []).map((oldIdx) => {
+            const lbl = oldIndexToLabel[oldIdx]
+            return labelToNewIndex[lbl]
+          }).filter((i) => i !== undefined)
+          return { ...q, answers: answersShuffled, correctMap: newCorrectMap }
+        } else {
+          // non-match: preserve original type ('single' or 'multiple')
+          const correctLabels = (q.correct || []).map((idx) => q.answers[idx].label)
+          const newCorrect = correctLabels.map((lbl) => labelToNewIndex[lbl]).filter((i) => i !== undefined)
+          return { ...q, answers: answersShuffled, correct: newCorrect }
+        }
       })
 
       setPicked(pickedPrepared)

@@ -9,6 +9,20 @@ function Option({ type, checked, onChange, label, text }) {
   )
 }
 
+function MatchOption({ item, answers, value, onChange }) {
+  return (
+    <div className="option" style={{ justifyContent: 'space-between' }}>
+      <span>{item}</span>
+      <select value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
+        <option value="">Select…</option>
+        {answers.map((a) => (
+          <option key={a.label} value={a.label}>{a.text}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
 function QuizHeader({ idx, total, topic, mins, secs }) {
   return (
     <div className="row" style={{ justifyContent: 'space-between' }}>
@@ -21,22 +35,45 @@ function QuizHeader({ idx, total, topic, mins, secs }) {
   )
 }
 
-function QuizQuestion({ q, isSingle, selected, onToggle }) {
+function QuizOptions({ q, isSingle, selected, onToggle, onSelectItem }) {
+  switch (q.type) {
+    case 'match':
+      return (
+        <div className="options">
+          {q.items.map((it, itemIdx) => (
+            <MatchOption
+              key={itemIdx}
+              item={it}
+              answers={q.answers}
+              value={selected[itemIdx]}
+              onChange={(label) => onSelectItem(itemIdx, label)}
+            />
+          ))}
+        </div>
+      )
+    default:
+      return (
+        <div className="options">
+          {q.answers.map((a) => (
+            <Option
+              key={a.label}
+              type={isSingle ? 'radio' : 'checkbox'}
+              checked={selected.has(a.label)}
+              onChange={() => onToggle(a.label)}
+              label={a.label}
+              text={a.text}
+            />
+          ))}
+        </div>
+      )
+  }
+}
+
+function QuizQuestion({ q, isSingle, selected, onToggle, onSelectItem }) {
   return (
     <>
-      <h1 className="question-text">{q.text}</h1>
-      <div className="options">
-        {q.answers.map((a) => (
-          <Option
-            key={a.label}
-            type={isSingle ? 'radio' : 'checkbox'}
-            checked={selected.has(a.label)}
-            onChange={() => onToggle(a.label)}
-            label={a.label}
-            text={a.text}
-          />
-        ))}
-      </div>
+    <h1 className="question-text">{q.text}</h1>
+    <QuizOptions q={q} isSingle={isSingle} selected={selected} onToggle={onToggle} onSelectItem={onSelectItem} />
     </>
   )
 }
@@ -79,7 +116,7 @@ function ConfirmModal({ title, message, onCancel, onConfirm, confirmLabel = 'Con
 export default function Quiz({ questions, minutes, onFinish }) {
   const total = questions.length
   const [idx, setIdx] = useState(0)
-  const [answers, setAnswers] = useState(() => questions.map(() => new Set()))
+  const [answers, setAnswers] = useState(() => questions.map((q) => (q.type === 'match' ? Array(q.items.length).fill(null) : new Set())))
   const [secsLeft, setSecsLeft] = useState(minutes * 60)
   const timerRef = useRef(null)
   const [showFinishModal, setShowFinishModal] = useState(false)
@@ -94,7 +131,7 @@ export default function Quiz({ questions, minutes, onFinish }) {
   }, [secsLeft])
 
   const q = questions[idx]
-  const isSingle = !q.multi
+  const isSingle = q.type === 'single'
   const selected = answers[idx]
 
   const progressPct = Math.round(((idx + 1) / total) * 100)
@@ -103,13 +140,25 @@ export default function Quiz({ questions, minutes, onFinish }) {
 
   const toggle = (label) => {
     setAnswers((prev) => {
-      const next = prev.map((s) => new Set(s))
-      if (isSingle) {
-        next[idx] = new Set([label])
-      } else {
-        const set = next[idx]
-        if (set.has(label)) set.delete(label)
-        else set.add(label)
+      const next = prev.map((s) => (Array.isArray(s) ? [...s] : new Set(s)))
+      if (!Array.isArray(next[idx])) {
+        if (isSingle) {
+          next[idx] = new Set([label])
+        } else {
+          const set = next[idx]
+          if (set.has(label)) set.delete(label)
+          else set.add(label)
+        }
+      }
+      return next
+    })
+  }
+
+  const selectItem = (itemIdx, label) => {
+    setAnswers((prev) => {
+      const next = prev.map((s, i) => (i === idx ? (Array.isArray(s) ? [...s] : new Set(s)) : (Array.isArray(s) ? [...s] : new Set(s))))
+      if (Array.isArray(next[idx])) {
+        next[idx][itemIdx] = label || null
       }
       return next
     })
@@ -120,7 +169,7 @@ export default function Quiz({ questions, minutes, onFinish }) {
   return (
     <div className="card grid">
       <QuizHeader idx={idx} total={total} topic={q.topic} mins={mins} secs={secs} />
-      <QuizQuestion q={q} isSingle={isSingle} selected={selected} onToggle={toggle} />
+      <QuizQuestion q={q} isSingle={isSingle} selected={selected} onToggle={toggle} onSelectItem={selectItem} />
       <ProgressBar progressPct={progressPct} />
       <QuizFooter
         idx={idx}

@@ -23,6 +23,13 @@ D. 6
 E. 7
 ACE
 
+Select the right degree for each polynomial expression
+A. 2
+B. 3
+> x^2
+> x^3
+AB
+
 @Computer Science
 Select the programming languages
 A. HTML
