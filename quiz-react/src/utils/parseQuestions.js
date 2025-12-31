@@ -40,8 +40,14 @@ export function parseQuestionsFromText(text) {
     }
 
     // Start of a question: non-empty line that is not an answer label and not a topic
-    const questionText = line;
+    // Collect question text spanning multiple lines until an answer line
+    const questionLines = [line];
     i++;
+    while (i < lines.length && !isAnswerLine(lines[i]) && lines[i].trim()) {
+      questionLines.push(lines[i].trim());
+      i++;
+    }
+    const questionText = questionLines.join('\n');
 
     // Collect answer options (variable length)
     const answers = [];

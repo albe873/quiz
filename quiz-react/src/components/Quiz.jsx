@@ -24,7 +24,7 @@ function QuizHeader({ idx, total, topic, mins, secs }) {
 function QuizQuestion({ q, isSingle, selected, onToggle }) {
   return (
     <>
-      <h1>{q.text}</h1>
+      <h1 className="question-text">{q.text}</h1>
       <div className="options">
         {q.answers.map((a) => (
           <Option
