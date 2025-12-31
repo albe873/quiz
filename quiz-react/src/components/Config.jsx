@@ -3,9 +3,12 @@ import { parseQuestionsFromText } from '../utils/parseQuestions'
 
 function ConfigUpload({ hasFile, parsedCount, foundCount, onFileChange, onSaveRequest }) {
   return (
+    <>
     <div className="row">
-      <label>Questions file (.txt):</label>
+      <label>Upload a quiz (.txt):</label>
       <input type="file" accept=".txt" onChange={onFileChange} />
+    </div>
+    <div className="row">
       {hasFile && foundCount > 0 && <span className="badge">{foundCount} questions found</span>}
       {!hasFile && parsedCount > 0 && <span className="badge">{parsedCount} questions loaded</span>}
       {hasFile && (
@@ -16,30 +19,42 @@ function ConfigUpload({ hasFile, parsedCount, foundCount, onFileChange, onSaveRe
         >Save loaded quiz</button>
       )}
     </div>
-  )
-}
-
-function ConfigInputs({ n, tMin, onChangeN, onChangeTMin }) {
-  return (
-    <>
-      <div className="row">
-        <label>Number of questions:</label>
-        <input type="number" min={1} value={n} onChange={(e) => onChangeN(parseInt(e.target.value || '0', 10))} />
-      </div>
-      <div className="row">
-        <label>Time (minutes):</label>
-        <input type="number" min={1} value={tMin} onChange={(e) => onChangeTMin(parseInt(e.target.value || '0', 10))} />
-      </div>
     </>
   )
 }
 
-function ConfigFooter({ canStart, onStart }) {
+function ConfigInputs({ n, tMin, onChangeN, onChangeTMin, canStart, onStart }) {
   return (
-    <div className="footer">
-      <span className="small">Upload a file or use the one already loaded.</span>
-      <button disabled={!canStart} onClick={onStart}>Start quiz</button>
+    <>
+    <div className="row">
+      <button
+        className="secondary"
+        onClick={(e) => {
+          const row = e.currentTarget.closest('.row')
+          const toToggle = []
+          let sib = row?.nextElementSibling
+          while (sib && sib.classList.contains('row')) {
+            toToggle.push(sib)
+            sib = sib.nextElementSibling
+          }
+          const isHidden = toToggle.length && toToggle[0].style.display === 'none'
+          toToggle.forEach((el) => { el.style.display = isHidden ? '' : 'none' })
+          e.currentTarget.textContent = isHidden ? 'Hide config' : 'Show config'
+        }}
+      >
+        Show config
+      </button>
+      <button disabled={!canStart} onClick={onStart} style={{ marginLeft: 'auto' }}>Start quiz</button>
     </div>
+    <div className="row" style={{ display: 'none' }}>
+      <label>Number of questions:</label>
+      <input type="number" min={1} value={n} onChange={(e) => onChangeN(parseInt(e.target.value || '0', 10))} />
+    </div>
+    <div className="row" style={{ display: 'none' }}>
+      <label>Time (minutes):</label>
+      <input type="number" min={1} value={tMin} onChange={(e) => onChangeTMin(parseInt(e.target.value || '0', 10))} />
+    </div>
+    </>
   )
 }
 
@@ -199,9 +214,10 @@ export default function Config({ onStart, parsedCount, initialN, initialT, saved
             tMin={tMin}
             onChangeN={(val) => setN(val)}
             onChangeTMin={(val) => setTMin(val)}
+            canStart={canStart}
+            onStart={handleStart}
           />
         </div>
-        <ConfigFooter canStart={canStart} onStart={handleStart} />
         <SaveModal
           show={showSaveModal}
           saveName={saveName}
