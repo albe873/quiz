@@ -8,6 +8,9 @@ B. 2,71
 C. 1,41
 D. 1,61
 A
+Explanation:  
+Pi is the ratio of a circle’s circumference to its diameter.
+Is about 3.14.
 
 What is 2 + 2?
 A. 3
@@ -22,6 +25,7 @@ C. 5
 D. 6
 E. 7
 ACE
+A natural number is prime if it is greater than 1 and is not a product of two smaller natural numbers
 
 Select the right degree for each polynomial expression
 A. 2

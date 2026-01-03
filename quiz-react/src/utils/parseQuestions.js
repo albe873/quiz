@@ -2,6 +2,20 @@
 // Supports topics (lines starting with '@'), variable number of answers,
 // and single/multi-correct indicated by letters on the solution line.
 
+function readExplanation(lines, startIndex) {
+  const explanationLines = [];
+  let i = startIndex;
+  while (i < lines.length) {
+    let line = lines[i].trim();
+    if (!line) break;
+    line = line.replace(/^Explanation:\s*/i, '').trim();
+    if (line)
+      explanationLines.push(line);
+    i++;
+  }
+  return { explanation: explanationLines.join('\n'), nextIndex: i };
+}
+
 export function parseQuestionsFromText(text) {
   const lines = text.split(/\r?\n/);
   const questions = [];
@@ -82,6 +96,11 @@ export function parseQuestionsFromText(text) {
       const correctMap = mapLabels
         .filter((lbl) => labelIndex[lbl] !== undefined)
         .map((lbl) => labelIndex[lbl]);
+      
+      // Move past mapping labels line before reading explanation
+      i++;
+      const { explanation, nextIndex } = readExplanation(lines, i);
+      i = nextIndex;
 
       questions.push({
         topic: currentTopic,
@@ -91,6 +110,7 @@ export function parseQuestionsFromText(text) {
         answers,
         correctMap,
         multi: false,
+        explanation : explanation,
       });
     } else {
       // Choice-type: this line is the solution letters
@@ -101,12 +121,18 @@ export function parseQuestionsFromText(text) {
         .map((lbl) => labelIndex[lbl]);
       const multiSelect = correctLabels.length > 1;
 
+      // Move past solution labels line before reading explanation
+      i++;
+      const { explanation, nextIndex } = readExplanation(lines, i);
+      i = nextIndex;
+
       questions.push({
         topic: currentTopic,
         type: multiSelect ? 'multiple' : 'single',
         text: questionText,
         answers,
         correct: correctIndices,
+        explanation : explanation,
       });
     }
 

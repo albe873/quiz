@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 
 function ResultsHeader({ totalCorrect, totalQuestions, onRestart }) {
   return (
@@ -14,6 +14,7 @@ function ResultsHeader({ totalCorrect, totalQuestions, onRestart }) {
 }
 
 function ResultsItem({ index, q, correctLabels, selLabels, isCorrect, selected }) {
+  const [showExplanation, setShowExplanation] = useState(false)
   return (
     <div className={`card`}>
       <div className={`summary ${isCorrect ? 'correct' : 'incorrect'}`} style={{ marginBottom: 8 }}>
@@ -22,7 +23,7 @@ function ResultsItem({ index, q, correctLabels, selLabels, isCorrect, selected }
           {q.topic && <div className="topic">{q.topic}</div>}
         </div>
         <div>
-          <div><strong>{q.text}</strong></div>
+          <div><strong className="question-text">{q.text}</strong></div>
           <div className="small">Correct answer: {q.type === 'match'
             ? (correctLabels.length
                 ? correctLabels
@@ -42,6 +43,23 @@ function ResultsItem({ index, q, correctLabels, selLabels, isCorrect, selected }
         </div>
       </div>
       <ResultsAnswers q={q} correctLabels={correctLabels} selected={selected} />
+      {q.explanation && (
+        <div className="explanation small">
+          <span
+            className="explanation-toggle"
+            role="button"
+            aria-expanded={showExplanation}
+            onClick={() => setShowExplanation((v) => !v)}
+          >
+            {showExplanation ? 'Hide explanation' : 'Show explanation'}
+          </span>
+          {showExplanation && (
+            <div className="explanation-content small">
+              {q.explanation}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -250,3 +250,16 @@ input[type="radio"], input[type="checkbox"] {
     color: #cfe0f5;
 }
 
+/* Explanation styling */
+.results .explanation {
+    margin-top: 6px;
+}
+.results .explanation-toggle {
+    cursor: pointer;
+    text-decoration: underline;
+}
+.results .explanation-content {
+    margin-top: 6px;
+    white-space: pre-wrap;
+}
+
