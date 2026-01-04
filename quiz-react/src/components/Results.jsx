@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 
-function ResultsHeader({ totalCorrect, totalQuestions, onRestart }) {
+function Header({ totalCorrect, totalQuestions, onRestart }) {
   return (
     <>
       <h1>Results</h1>
@@ -14,9 +14,8 @@ function ResultsHeader({ totalCorrect, totalQuestions, onRestart }) {
 }
 
 function ResultsItem({ index, q, correctLabels, selLabels, isCorrect, selected }) {
-  const [showExplanation, setShowExplanation] = useState(false)
   return (
-    <div className={`card`}>
+    <div className="card">
       <div className={`summary ${isCorrect ? 'correct' : 'incorrect'}`} style={{ marginBottom: 8 }}>
         <div style={{ minWidth: 80 }}>
           <div className="badge">#{index + 1}</div>
@@ -42,24 +41,8 @@ function ResultsItem({ index, q, correctLabels, selLabels, isCorrect, selected }
           }</div>
         </div>
       </div>
-      <ResultsAnswers q={q} correctLabels={correctLabels} selected={selected} />
-      {q.explanation && (
-        <div className="explanation small">
-          <span
-            className="explanation-toggle"
-            role="button"
-            aria-expanded={showExplanation}
-            onClick={() => setShowExplanation((v) => !v)}
-          >
-            {showExplanation ? 'Hide explanation' : 'Show explanation'}
-          </span>
-          {showExplanation && (
-            <div className="explanation-content small">
-              {q.explanation}
-            </div>
-          )}
-        </div>
-      )}
+      <Answers q={q} correctLabels={correctLabels} selected={selected} />
+      <Explanation q={q} />
     </div>
   )
 }
@@ -82,7 +65,7 @@ function ResultsList({ items }) {
   )
 }
 
-function ResultAnswerOption({ a, correctLabels, selected }) {
+function AnswerOption({ a, correctLabels, selected }) {
   const ok = correctLabels.includes(a.label)
   const chosen = selected.has(a.label)
   const cls = chosen ? (ok ? 'correct' : 'incorrect') : (ok ? 'missed' : '')
@@ -98,7 +81,7 @@ function ResultAnswerOption({ a, correctLabels, selected }) {
   )
 }
 
-function ResultsAnswers({ q, correctLabels, selected }) {
+function Answers({ q, correctLabels, selected }) {
   if (q.type === 'match') {
     return (
       <div className="options">
@@ -127,8 +110,30 @@ function ResultsAnswers({ q, correctLabels, selected }) {
       {[...q.answers]
         .sort((a, b) => a.label.localeCompare(b.label))
         .map((a) => (
-          <ResultAnswerOption key={a.label} a={a} correctLabels={correctLabels} selected={selected} />
+          <AnswerOption key={a.label} a={a} correctLabels={correctLabels} selected={selected} />
         ))}
+    </div>
+  )
+}
+
+function Explanation({ q }) {
+  const [show, setShow] = useState(false)
+  if (!q.explanation) return null
+  return (
+    <div className="explanation small">
+      <span
+        className="explanation-toggle"
+        role="button"
+        aria-expanded={show}
+        onClick={() => setShow((v) => !v)}
+      >
+        {show ? 'Hide explanation' : 'Show explanation'}
+      </span>
+      {show && (
+        <div className="explanation-content small">
+          {q.explanation}
+        </div>
+      )}
     </div>
   )
 }
@@ -155,7 +160,7 @@ export default function Results({ questions, selections, onRestart }) {
 
   return (
     <div className="card grid results">
-      <ResultsHeader totalCorrect={totalCorrect} totalQuestions={questions.length} onRestart={onRestart} />
+      <Header totalCorrect={totalCorrect} totalQuestions={questions.length} onRestart={onRestart} />
       <ResultsList items={items} />
     </div>
   )
