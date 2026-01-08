@@ -3,6 +3,7 @@ import { parseQuestionsFromText } from './utils/parseQuestions.js'
 import Config from './components/Config.jsx'
 import Quiz from './components/Quiz.jsx'
 import Results from './components/Results.jsx'
+import Credits from './components/Credits.jsx'
 
 const appname = 'quiz-react';
 
@@ -148,6 +149,7 @@ export default function App() {
   }
 
   return (
+    <>
     <div className="container grid">
       {phase === 'config' && (
         <Config
@@ -165,5 +167,7 @@ export default function App() {
       {phase === 'quiz' && <Quiz questions={picked} minutes={minutes} onFinish={finish} />}
       {phase === 'results' && <Results questions={picked} selections={selections} onRestart={restart} />}
     </div>
+    <Credits />
+    </>
   )
 }

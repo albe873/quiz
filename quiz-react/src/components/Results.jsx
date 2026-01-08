@@ -8,7 +8,6 @@ function Header({ totalCorrect, totalQuestions, onRestart }) {
         <div className="badge">Correct: {totalCorrect}/{totalQuestions}</div>
         <button onClick={onRestart}>Restart</button>
       </div>
-      <hr />
     </>
   )
 }
