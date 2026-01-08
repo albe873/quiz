@@ -20,7 +20,7 @@ export function parseQuestionsFromText(text) {
   const lines = text.split(/\r?\n/);
   const questions = [];
   let i = 0;
-  let currentTopic = null;
+  let currentTopic = null, overrideType = null;
   let meta = { questions: null, time: null };
 
   const isAnswerLine = (line) => /^(?:[A-Z])\.[\s]/.test(line);
@@ -42,6 +42,7 @@ export function parseQuestionsFromText(text) {
 
   while (i < lines.length) {
     let line = lines[i]?.trim() ?? '';
+    let question = null;
 
     if (!line) { i++; continue; }
 
@@ -49,7 +50,14 @@ export function parseQuestionsFromText(text) {
     if (line.startsWith('#')) { i += 1; tryParseMeta(line); continue; }
 
     if (line.startsWith('@')) { // topic line
-      currentTopic = cleanTopic(line);
+      if (line.includes('OverrideType=')) {
+        let overridePart = line.split('OverrideType=')[1];
+        overrideType = overridePart.split(/\s+/)[0].toLowerCase();
+        if (overrideType !== 'single' && overrideType !== 'multiple' && overrideType !== 'match')
+          overrideType = null;
+      }
+      else
+        currentTopic = cleanTopic(line);
       i++; continue;
     }
 
@@ -102,16 +110,14 @@ export function parseQuestionsFromText(text) {
       const { explanation, nextIndex } = readExplanation(lines, i);
       i = nextIndex;
 
-      questions.push({
+      question = {
         topic: currentTopic,
         type: 'match',
         text: questionText,
         items,
         answers,
         correctMap,
-        multi: false,
-        explanation : explanation,
-      });
+      }
     } else {
       // Choice-type: this line is the solution letters
       const correctLabels = (peek.match(/[A-Z]/g) || []).map((c) => c.toUpperCase());
@@ -123,18 +129,25 @@ export function parseQuestionsFromText(text) {
 
       // Move past solution labels line before reading explanation
       i++;
-      const { explanation, nextIndex } = readExplanation(lines, i);
-      i = nextIndex;
 
-      questions.push({
+      question = {
         topic: currentTopic,
         type: multiSelect ? 'multiple' : 'single',
         text: questionText,
         answers,
         correct: correctIndices,
-        explanation : explanation,
-      });
+      }
     }
+    
+    const { explanation, nextIndex } = readExplanation(lines, i);
+    i = nextIndex;
+    question.explanation = explanation;
+
+    if (overrideType) {
+      question.type = overrideType;
+      overrideType = null;
+    }
+    questions.push(question);
 
     // Skip any trailing blank lines
     i++;
