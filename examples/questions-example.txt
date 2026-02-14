@@ -1,5 +1,7 @@
-# questions=2
-# time=2
+# questions = 2
+# time=3
+# author=Albe873
+# version=1.0
 
 @Mathematics
 What is the approximate value of pi?

@@ -113,11 +113,11 @@ function ConfirmModal({ title, message, onCancel, onConfirm, confirmLabel = 'Con
   )
 }
 
-export default function Quiz({ questions, minutes, onFinish }) {
+export default function Quiz({ questions, time, onFinish }) {
   const total = questions.length
   const [idx, setIdx] = useState(0)
   const [answers, setAnswers] = useState(() => questions.map((q) => (q.type === 'match' ? Array(q.items.length).fill(null) : new Set())))
-  const [secsLeft, setSecsLeft] = useState(minutes * 60)
+  const [secsLeft, setSecsLeft] = useState(time * 60)
   const timerRef = useRef(null)
   const [showFinishModal, setShowFinishModal] = useState(false)
 

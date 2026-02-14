@@ -26,17 +26,30 @@ export function parseQuestionsFromText(text) {
   const isAnswerLine = (line) => /^(?:[A-Z])\.[\s]/.test(line);
   const cleanTopic = (line) => line.slice(1).replace(/[^a-zA-ZÀ-ÿ\s]+/g, '').trim();
   const tryParseMeta = (line) => {
-    // Support lines like: # questions=20, # time=30, case-insensitive
-    if (!line.startsWith('#')) return false;
+    // Support lines like:
+    // # quiz-name=My Quiz
+    // # question(s)=20,
+    // # time=30 (in minutes)
+    // # author=Me
+    // # version=1.0
+    if (!line.startsWith('#'))
+      return false;
     const m = line.slice(1).trim();
     const [k, v] = m.split('=').map((s) => s && s.trim());
-    if (!k || !v) return true; // comment-like line, ignore
+    if (!k || !v)
+      return true; // comment-like line, ignore
     const key = k.toLowerCase();
-    const val = parseInt(v, 10);
-    if (Number.isFinite(val)) {
-      if (key.includes('question') || key === 'n') meta.questions = val;
-      if (key.includes('time') || key.includes('timer') || key.includes('minute')) meta.time = val;
-    }
+    const val = parseInt(v);
+    if (key.includes('question') && Number.isFinite(val))
+      meta.questions = val;
+    if (key.includes('time') && Number.isFinite(val))
+      meta.time = val;
+    if (key === 'author')
+      meta.author = v;
+    if (key === 'version')
+      meta.version = v;
+    if (key.includes('name'))
+      meta.name = v;
     return true;
   };
 
@@ -47,7 +60,11 @@ export function parseQuestionsFromText(text) {
     if (!line) { i++; continue; }
 
     // Parse optional metadata before questions
-    if (line.startsWith('#')) { i += 1; tryParseMeta(line); continue; }
+    if (line.startsWith('#')) {
+      i += 1;
+      tryParseMeta(line);
+      continue
+    }
 
     if (line.startsWith('@')) { // topic line
       if (line.includes('OverrideType=')) {

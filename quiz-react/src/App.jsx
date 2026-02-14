@@ -4,23 +4,24 @@ import Config from './components/Config.jsx'
 import Quiz from './components/Quiz.jsx'
 import Results from './components/Results.jsx'
 import Credits from './components/Credits.jsx'
+import Create from './components/Create.jsx'
 
 const appname = 'quiz-react';
 
 
 export default function App() {
-  const [phase, setPhase] = useState('config') // config | quiz | results
-  const [all, setAll] = useState([])
+  const [phase, setPhase] = useState('config') // config | quiz | results | create
+  const [quiz, setQuiz] = useState(null)
   const [picked, setPicked] = useState([])
-  const [minutes, setMinutes] = useState(18)
+  const [editQuiz, setEditQuiz] = useState(null)
   const [selections, setSelections] = useState([])
-  const [lastN, setLastN] = useState(() => {
-    const v = localStorage.getItem(`${appname}:n`);
-    return v ? parseInt(v, 10) : 10;
-  })
-  const [lastT, setLastT] = useState(() => {
+  const [time, setTime] = useState(() => {
     const v = localStorage.getItem(`${appname}:t`);
-    return v ? parseInt(v, 10) : 10;
+    return v ? parseInt(v) : null;
+  })
+    const [N, setN] = useState(() => {
+    const v = localStorage.getItem(`${appname}:n`);
+    return v ? parseInt(v) : null;
   })
   const [savedQuizzes, setSavedQuizzes] = useState(() => {
     try { return JSON.parse(localStorage.getItem(`${appname}:saved`) || '[]') } catch { return [] }
@@ -30,28 +31,32 @@ export default function App() {
     localStorage.setItem(`${appname}:saved`, JSON.stringify(list))
   }
 
-  const onReplaceDataset = (txt) => {
-    try {
-      const { questions, meta } = parseQuestionsFromText(txt)
-      setAll(questions)
-      setPicked([])
-      setSelections([])
-      if (meta?.questions && Number.isFinite(meta.questions)) setLastN(meta.questions)
-      if (meta?.time && Number.isFinite(meta.time)) setLastT(meta.time)
-      return { count: questions.length }
-    } catch { return null }
+  const ensureMeta = (parsedQuiz) => {
+    const meta = {
+      ...(parsedQuiz.meta || {}),
+      questions: Number.isFinite(parsedQuiz.meta?.questions) && parsedQuiz.meta.questions > 0 ? parsedQuiz.meta.questions : parsedQuiz.questions.length,
+      time: Number.isFinite(parsedQuiz.meta?.time) && parsedQuiz.meta.time > 0 ? parsedQuiz.meta.time : parsedQuiz.questions.length,
+    }
+    return { ...parsedQuiz, meta }
   }
 
-  const onSaveCurrent = (name, text, n, t) => {
+  const onReplaceQuiz = (parsedQuiz) => {
+    const q = ensureMeta(parsedQuiz)
+    setQuiz(q)
+    setPicked([])
+    setSelections([])
+    setN(q.meta.questions)
+    setTime(q.meta.time)
+  }
+
+  const onSaveCurrent = (name, parsedQuiz) => {
     try {
-      const { questions } = parseQuestionsFromText(text)
+      const q = ensureMeta(parsedQuiz)
       const entry = {
         id: Date.now().toString(),
         name,
-        text,
-        count: questions.length,
-        n,
-        time: t,
+        questions: q.questions,
+        meta: q.meta,
         savedAt: new Date().toISOString(),
       }
       const list = [entry, ...savedQuizzes]
@@ -62,15 +67,13 @@ export default function App() {
   const onLoadSaved = async (id) => {
     const item = savedQuizzes.find((x) => x.id === id)
     if (!item) return null
-    try {
-      const { questions } = parseQuestionsFromText(item.text)
-      setAll(questions)
-      setPicked([])
-      setSelections([])
-      setLastN(item.n)
-      setLastT(item.time)
-      return { text: item.text, count: questions.length, n: item.n, t: item.time }
-    } catch { return null }
+    const loaded = ensureMeta({ questions: item.questions, meta: item.meta })
+    setQuiz(loaded)
+    setPicked([])
+    setSelections([])
+    setN(loaded.meta.questions)
+    setTime(loaded.meta.time)
+    return loaded
   }
 
   const onDeleteSaved = (id) => {
@@ -78,20 +81,9 @@ export default function App() {
     persistSaved(next)
   }
 
-  const parsedCount = all.length
-
-  const start = (txt, n, tMin) => {
+  const start = (n, time) => {
     try {
-      let dataset = all
-      if (txt && txt.trim().length > 0) {
-        const { questions, meta } = parseQuestionsFromText(txt)
-        dataset = questions
-        setAll(dataset)
-      }
-      if (dataset.length === 0) {
-        alert('No file loaded. Upload a .txt file or use the one already loaded.')
-        return
-      }
+      let dataset = quiz?.questions || []
       const count = Math.min(n, dataset.length)
       const shuffledQuestions = [...dataset].sort(() => Math.random() - 0.5).slice(0, count)
 
@@ -126,11 +118,10 @@ export default function App() {
       })
 
       setPicked(pickedPrepared)
-      setMinutes(tMin)
-      setLastN(n)
-      setLastT(tMin)
+      setTime(time)
+      setN(n)
       localStorage.setItem(`${appname}:n`, String(n))
-      localStorage.setItem(`${appname}:t`, String(tMin))
+      localStorage.setItem(`${appname}:t`, String(time))
       setPhase('quiz')
     } catch (e) {
       alert('Error parsing file: ' + e.message)
@@ -153,19 +144,37 @@ export default function App() {
     <div className="container grid">
       {phase === 'config' && (
         <Config
-          onStart={start}
-          parsedCount={parsedCount}
-          initialN={lastN}
-          initialT={lastT}
+          quiz={quiz}
           savedQuizzes={savedQuizzes}
+          onStart={start}
           onSaveCurrent={onSaveCurrent}
           onLoadSaved={onLoadSaved}
           onDeleteSaved={onDeleteSaved}
-          onReplaceDataset={onReplaceDataset}
+          onReplaceQuiz={onReplaceQuiz}
+          onCreate={() => { setEditQuiz(null); setPhase('create') }}
+          onEdit={(id) => {
+            const item = savedQuizzes.find((x) => x.id === id)
+            if (item) {
+              setEditQuiz({ questions: item.questions, meta: { ...item.meta, name: item.name } })
+              setPhase('create')
+            }
+          }}
         />
       )}
-      {phase === 'quiz' && <Quiz questions={picked} minutes={minutes} onFinish={finish} />}
+      {phase === 'quiz' && <Quiz questions={picked} time={time} onFinish={finish} />}
       {phase === 'results' && <Results questions={picked} selections={selections} onRestart={restart} />}
+      {phase === 'create' && (
+        <Create
+          editQuiz={editQuiz}
+          onBack={() => setPhase('config')}
+          onSaveToApp={(name, parsedQuiz) => {
+            onSaveCurrent(name, parsedQuiz)
+            onReplaceQuiz(parsedQuiz)
+            setEditQuiz(null)
+            setPhase('config')
+          }}
+        />
+      )}
     </div>
     <Credits />
     </>

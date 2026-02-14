@@ -61,6 +61,20 @@ label {
     font-weight: 600;
 }
 
+/* Utility classes */
+.ml-auto {
+    margin-left: auto;
+}
+.mr-auto {
+    margin-right: auto;
+}
+.flex-1 {
+    flex: 1;
+}
+.align-start {
+    align-items: flex-start;
+}
+
 /* Forms for settings */
 input[type="number"] {
     width: 90px;
@@ -103,6 +117,33 @@ input[type="text"] {
     padding: 8px 10px;
     outline: none;
 }
+input[type="text"]:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+input[type="radio"], input[type="checkbox"] {
+	accent-color: #2563eb;
+}
+
+select {
+	background: #161a20;
+	color: #e5e7eb;
+	border: 1px solid #334155;
+	border-radius: 8px;
+	padding: 8px 10px;
+	min-width: 160px;
+	outline: none;
+	appearance: none;
+	-webkit-appearance: none;
+}
+select:focus {
+	border-color: #2563eb;
+	box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
+}
+option {
+	background: #2a3140;
+	color: #e5e7eb;
+}
 
 /* Modals */
 .modal {
@@ -120,7 +161,7 @@ input[type="text"] {
     padding: 16px;
     width: 100%;
     max-width: 520px;
-    background: rgba(26, 30, 37, 0.7);
+    background: rgba(0, 0, 0, 0.8);
 }
 
 /* Buttons */
@@ -188,30 +229,6 @@ button:disabled {
     justify-content: space-between;
     align-items: center;
     margin-top: 12px;
-}
-
-/* Form controls */
-select {
-	background: #161a20;
-	color: #e5e7eb;
-	border: 1px solid #334155;
-	border-radius: 8px;
-	padding: 8px 10px;
-	min-width: 160px;
-	outline: none;
-	appearance: none;
-	-webkit-appearance: none;
-}
-select:focus {
-	border-color: #2563eb;
-	box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
-}
-option {
-	background: #161a20;
-	color: #e5e7eb;
-}
-input[type="radio"], input[type="checkbox"] {
-	accent-color: #2563eb;
 }
 
 /* Results-specific styling */
@@ -293,4 +310,62 @@ input[type="radio"], input[type="checkbox"] {
     color: #434547;
 }
 
-
+/* Create quiz */
+.create-textarea {
+    width: 100%;
+    background: #2a3140;
+    color: #e5e7eb;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    outline: none;
+}
+.create-textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+.create-preview {
+    background: #0d1117;
+    color: #c9d1d9;
+    border: 1px solid #2a3140;
+    border-radius: 8px;
+    padding: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.85rem;
+    max-height: 50vh;
+    overflow: auto;
+}
+.create-question {
+    transition: box-shadow 0.2s ease;
+}
+.create-question:hover {
+    box-shadow: 0 0 0 1px #334155;
+}
+.create-question > .row:first-child {
+    cursor: pointer;
+}
+.create-details {
+    cursor: pointer;
+}
+.create-details summary {
+    font-weight: 600;
+    color: #93c5fd;
+    font-size: 0.95rem;
+}
+.create-details > .grid {
+    gap: 8px;
+    margin-top: 10px;
+}
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.btn-sm {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
