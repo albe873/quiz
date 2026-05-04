@@ -172,6 +172,7 @@ export default function Config({ quiz, savedQuizzes, onStart, onSaveCurrent, onL
 
   return (
     <>
+      <h1>Quiz Configuration</h1>
       <div className="card grid">
         <ConfigUpload
           questionCount={quiz?.questions?.length || 0}
